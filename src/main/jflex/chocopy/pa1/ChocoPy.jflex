@@ -1,5 +1,6 @@
 package chocopy.pa1;
 import java_cup.runtime.*;
+import java.util.Stack;
 
 %%
 
@@ -48,6 +49,39 @@ import java_cup.runtime.*;
             value);
     }
 
+    // Stack para controlar os níveis de indentação
+    private Stack<Integer> indentationStack = new Stack<>();
+    { indentationStack.push(0); } // Inicializa com 0
+
+    // Variável para armazenar a indentação atual
+    private int currentIndent = 0;
+
+    // Método para processar indentação
+    private Symbol processIndentation() {
+        int spaces = yytext().length();
+        
+        if (spaces > currentIndent) {
+            currentIndent = spaces;
+            indentationStack.push(currentIndent);
+            return symbol(ChocoPyTokens.INDENT);
+        } else if (spaces < currentIndent) {
+            // Verifica se o nível de indentação existe na pilha
+            if (!indentationStack.contains(spaces)) {
+                // Erro: indentação inválida
+                return symbol(ChocoPyTokens.UNRECOGNIZED);
+            }
+            
+            // Gera tokens DEDENT até chegar no nível correto
+            currentIndent = spaces;
+            // Remove níveis maiores que o atual
+            while (indentationStack.peek() > currentIndent) {
+                indentationStack.pop();
+                return symbol(ChocoPyTokens.DEDENT);
+            }
+        }
+        // Se a indentação for igual à atual, não faz nada
+        return null;
+    }
 %}
 
 /* Macros (regexes used in rules below) */
@@ -64,13 +98,19 @@ StringLiteral = \"(\\.|[^\"\\\t\n])*\"
 
 Comment = #.*
 
+Indentation = [ \t]+
+
 %%
 
-
 <YYINITIAL> {
+  /* Processa indentação no início da linha */
+  ^{Indentation} {
+      Symbol s = processIndentation();
+      if (s != null) return s;
+  }
 
   /* Delimiters. */
-  {LineBreak}                 { return symbol(ChocoPyTokens.NEWLINE); }
+  {LineBreak}                 { currentIndent = 0; return symbol(ChocoPyTokens.NEWLINE); }
 
   /* Literals. */
   {IntegerLiteral}            { return symbol(ChocoPyTokens.NUMBER,
@@ -113,8 +153,6 @@ Comment = #.*
   "while"                     { return symbol(ChocoPyTokens.WHILE, yytext()); }
   "yield"                     { return symbol(ChocoPyTokens.YIELD, yytext()); } 
 
-
-
   /* Operators. */
   "+"                         { return symbol(ChocoPyTokens.PLUS, yytext()); }
   "-"                         { return symbol(ChocoPyTokens.MINUS, yytext()); }
@@ -136,8 +174,6 @@ Comment = #.*
   ":"                         { return symbol(ChocoPyTokens.COLON, yytext()); }
   "->"                        { return symbol(ChocoPyTokens.RIGHT_ARROW, yytext()); }
 
-
-
   /* Whitespace. */
   {WhiteSpace}                { /* ignore */ }
 
@@ -148,7 +184,15 @@ Comment = #.*
   {Comment}                   { return symbol(ChocoPyTokens.COMMENT, yytext()); }
 }
 
-<<EOF>>                       { return symbol(ChocoPyTokens.EOF); }
+<<EOF>> {
+    // Gera DEDENTs para todos os níveis restantes
+    if (indentationStack.size() > 1) {
+        indentationStack.pop();
+        return symbol(ChocoPyTokens.DEDENT);
+    } else {
+        return symbol(ChocoPyTokens.EOF);
+    }
+}
 
 /* Error fallback. */
 [^]                           { return symbol(ChocoPyTokens.UNRECOGNIZED); }
