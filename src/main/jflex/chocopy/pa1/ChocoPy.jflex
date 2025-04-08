@@ -56,9 +56,13 @@ WhiteSpace = [ \t]
 
 LineBreak  = \r|\n|\r\n
 
+Identifier = [a-zA-Z_][a-zA-Z_0-9]*
+
 IntegerLiteral = 0 | [1-9][0-9]*
 
-Identifier = [a-zA-Z_][a-zA-Z_0-9]*
+StringLiteral = \"(\\.|[^\"\\\t\n])*\" 
+
+Comment = #.*
 
 %%
 
@@ -71,6 +75,7 @@ Identifier = [a-zA-Z_][a-zA-Z_0-9]*
   /* Literals. */
   {IntegerLiteral}            { return symbol(ChocoPyTokens.NUMBER,
                                                  Integer.parseInt(yytext())); }
+  {StringLiteral}             { return symbol(ChocoPyTokens.STRING, yytext());}
 
   /* Keywords */
   "False"                     { return symbol(ChocoPyTokens.FALSE, yytext()); }
@@ -138,6 +143,9 @@ Identifier = [a-zA-Z_][a-zA-Z_0-9]*
 
   /* Identifiers */
   {Identifier}                { return symbol(ChocoPyTokens.IDENTIFIER, yytext()); }
+
+  /* Comments */
+  {Comment}                   { return symbol(ChocoPyTokens.COMMENT, yytext()); }
 }
 
 <<EOF>>                       { return symbol(ChocoPyTokens.EOF); }
