@@ -142,12 +142,97 @@ action code {:
  * semantic value of type <type> for these symbols that may be referenced
  * in actions ( {: ... :} ).
  */
+
+/* TODO: LINE STRUCTURE TOKENS */
+
 terminal NEWLINE;
-terminal String PLUS; 
-terminal Integer NUMBER; 
+
 /* Returned by the lexer for erroneous tokens.  Since it does not appear in
  * the grammar, it indicates a syntax error. */
-terminal UNRECOGNIZED;   
+terminal UNRECOGNIZED; 
+
+
+
+/* Identifiers */
+
+terminal String IDENTIFIER; 
+
+
+/* Literals */
+/* boolean literals True and False are simply represented by their keyword tokens */
+
+terminal String IDSTRING /* syntax of an identifier */
+terminal String STRING /* for values */
+terminal Integer NUMBER 
+
+/* Operators */
+/* as stated on the language reference document, the operator tokens are the following: + - * // % < > <= >= 
+ == != = ( ) [ ] , : . -> */
+
+terminal String PLUS
+terminal String MINUS
+terminal String TIMES
+terminal String DIVISION
+terminal String MOD 
+terminal String LESS_THAN
+terminal String GREATER_THAN
+terminal String LESS_THAN_EQUAL_TO
+terminal String GREATER_THAN_EQUAL_TO
+terminal String EQUAL_TO
+terminal String NOT_EQUAL_TO
+terminal String EQUAL
+terminal String LEFT_PARENTHESIS
+terminal String RIGHT_PARENTHESIS
+terminal String LEFT_BRACKET
+terminal String RIGHT_BRACKET
+terminal String COMMA
+terminal String COLON 
+terminal String RIGHT_ARROW 
+
+
+/* KEYWORDS */
+/* as stated on the language reference document, the keyword tokens are the following: False, None, True, and, as,
+assert, async, await, break, class, continue, def, del, elif, else, except, finally, for, from, global, if, import,
+in, is, lambda, nonlocal, not, or, pass, raise, return, try, while, with, yield. */
+
+terminal String FALSE 
+terminal String NONE 
+terminal String TRUE 
+terminal String AND 
+terminal String AS
+terminal String ASSERT 
+terminal String ASYNC
+terminal String AWAIT 
+terminal String BREAK 
+terminal String CLASS 
+terminal String CONTINUE 
+terminal String DEF 
+terminal String DEL 
+terminal String ELIF 
+terminal String ELSE 
+terminal String EXCEPT 
+terminal String FINALLY 
+terminal String FOR
+terminal String FROM 
+terminal String GLOBAL 
+terminal String IF 
+terminal String IMPORT 
+terminal String IN 
+terminal String IS 
+terminal String LAMBDA 
+terminal String NONLOCAL 
+terminal String NOT 
+terminal String OR 
+terminal String PASS 
+terminal String RAISE 
+terminal String RETURN 
+terminal String TRY 
+terminal String WHILE 
+terminal String WITH 
+terminal String YIELD 
+
+/* TODO: DELIMITER TOKENS */
+
 
 /* Nonterminal symbols (defined in production rules below).
  * As for terminal symbols, 
