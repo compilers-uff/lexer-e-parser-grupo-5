@@ -17,6 +17,8 @@ import java.util.Stack;
 %cup
 %cupdebug
 
+%state HANDLE_INDENTATION
+
 %eofclose false
 
 /*** Do not change the flags above unless you know what you are doing. ***/
@@ -49,39 +51,41 @@ import java.util.Stack;
             value);
     }
 
-    // Stack para controlar os níveis de indentação
+    // Pilha para controlar os niveis de indentacao
     private Stack<Integer> indentationStack = new Stack<>();
-    { indentationStack.push(0); } // Inicializa com 0
+    { indentationStack.push(0); } // Inicializa com 0 segundo o chocopy language reference
 
     // Variável para armazenar a indentação atual
     private int currentIndent = 0;
 
-    // Método para processar indentação
-    private Symbol processIndentation() {
-        int spaces = yytext().length();
-        
-        if (spaces > currentIndent) {
-            currentIndent = spaces;
-            indentationStack.push(currentIndent);
-            return symbol(ChocoPyTokens.INDENT);
-        } else if (spaces < currentIndent) {
-            // Verifica se o nível de indentação existe na pilha
-            if (!indentationStack.contains(spaces)) {
-                // Erro: indentação inválida
-                return symbol(ChocoPyTokens.UNRECOGNIZED);
-            }
-            
-            // Gera tokens DEDENT até chegar no nível correto
-            currentIndent = spaces;
-            // Remove níveis maiores que o atual
-            while (indentationStack.peek() > currentIndent) {
-                indentationStack.pop();
-                return symbol(ChocoPyTokens.DEDENT);
-            }
-        }
-        // Se a indentação for igual à atual, não faz nada
-        return null;
+    // Metodo para adicionar "\t" no nivel de indentacao
+    private void addTab (){
+        currentIndent += 8; // equivale a 8 whitespaces segundo o lang ref
     }
+
+    // Metodo para adicionar " " no nivel de indentacao   
+    private void addSpace(){
+        currentIndent++;
+    }
+
+    // Metodo para gerar os simbolos. Volta para o estado inicial ao gerar um simbolo INDENT. 
+    private Symbol geraDent(){
+        if(currentIndent > indentationStack.peek()){
+            indentationStack.push(currentIndent);
+            yypushback(1);
+            yybegin(YYINITIAL);
+            return symbol(ChocoPyTokens.INDENT);
+        }
+        else if(currentIndent < indentationStack.peek()){
+            yypushback(1);
+            indentationStack.pop();
+            return symbol(ChocoPyTokens.DEDENT);
+        }
+        else{
+            return null;
+        }
+    }
+
 %}
 
 /* Macros (regexes used in rules below) */
@@ -98,19 +102,17 @@ StringLiteral = \"(\\.|[^\"\\\t\n])*\"
 
 Comment = #.*
 
-Indentation = [ \t]+
 
 %%
 
 <YYINITIAL> {
-  /* Processa indentação no início da linha */
-  ^{Indentation} {
-      Symbol s = processIndentation();
-      if (s != null) return s;
-  }
-
+  
   /* Delimiters. */
-  {LineBreak}                 { currentIndent = 0; return symbol(ChocoPyTokens.NEWLINE); }
+  {LineBreak}                 { 
+                                yybegin(HANDLE_INDENTATION); 
+                                currentIndent = 0; 
+                                return symbol(ChocoPyTokens.NEWLINE); 
+                              }
 
   /* Literals. */
   {IntegerLiteral}            { return symbol(ChocoPyTokens.NUMBER,
@@ -184,14 +186,28 @@ Indentation = [ \t]+
   {Comment}                   { return symbol(ChocoPyTokens.COMMENT, yytext()); }
 }
 
+<HANDLE_INDENTATION> {
+  " "                         { addSpace(); }
+  \t                          { addTab(); }
+  .                           { 
+                                if(indentationStack.peek() != currentIndent){ // verifica se o nivel de indentacao mudou
+                                    return geraDent(); // caso tenha mudado, decide o simbolo a ser retornado
+                                } 
+                                else { // caso nao tenha mudado, devolve o caracter lido e volta para o estado inicial
+                                    yypushback(1); 
+                                    yybegin(YYINITIAL);
+                                } 
+                              }
+
+}
+
 <<EOF>> {
-    // Gera DEDENTs para todos os níveis restantes
-    if (indentationStack.size() > 1) {
+    if(indentationStack.peek() > 0){
         indentationStack.pop();
+        zzAtEOF = false; // reseta variavel que indica end of file, possibilitando loop
         return symbol(ChocoPyTokens.DEDENT);
-    } else {
-        return symbol(ChocoPyTokens.EOF);
     }
+    return symbol(ChocoPyTokens.EOF); 
 }
 
 /* Error fallback. */

@@ -152,7 +152,8 @@ terminal COMMENT;
 
 /* Returned by the lexer for erroneous tokens.  Since it does not appear in
  * the grammar, it indicates a syntax error. */
-terminal UNRECOGNIZED; 
+terminal UNRECOGNIZED;
+terminal BAD_INDENTATION;
 
 
 
