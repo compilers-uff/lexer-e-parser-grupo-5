@@ -68,7 +68,8 @@ import java.util.Stack;
         currentIndent++;
     }
 
-    // Metodo para gerar os simbolos. Volta para o estado inicial ao gerar um simbolo INDENT. 
+    // Metodo para gerar os simbolos. Volta para o estado inicial ao gerar um simbolo INDENT.
+    // Nao volta para o estado inicial ao gerar um simbolo DEDENT ja que pode ser necessario gerar mais de um.
     private Symbol geraDent(){
         if(currentIndent > indentationStack.peek()){
             indentationStack.push(currentIndent);
@@ -81,9 +82,8 @@ import java.util.Stack;
             indentationStack.pop();
             return symbol(ChocoPyTokens.DEDENT);
         }
-        else{
-            return null;
-        }
+        
+        return null;
     }
 
 %}
@@ -100,7 +100,7 @@ IntegerLiteral = 0 | [1-9][0-9]*
 
 StringLiteral = \"(\\.|[^\"\\\t\n])*\" 
 
-Comment = #.*
+Comment = #.* // tokens de comentario removidos pois nao devem ser emitidos pelo lexer
 
 
 %%
@@ -120,40 +120,41 @@ Comment = #.*
   {StringLiteral}             { return symbol(ChocoPyTokens.STRING, yytext());}
 
   /* Keywords */
-  "False"                     { return symbol(ChocoPyTokens.FALSE, yytext()); }
-  "None"                      { return symbol(ChocoPyTokens.NONE, yytext()); }
-  "True"                      { return symbol(ChocoPyTokens.TRUE, yytext()); }
-  "and"                       { return symbol(ChocoPyTokens.AND, yytext()); }
-  "as"                        { return symbol(ChocoPyTokens.AS, yytext()); }
-  "assert"                    { return symbol(ChocoPyTokens.ASSERT, yytext()); }
-  "async"                     { return symbol(ChocoPyTokens.ASYNC, yytext()); }
-  "await"                     { return symbol(ChocoPyTokens.AWAIT, yytext()); }
-  "break"                     { return symbol(ChocoPyTokens.BREAK, yytext()); }
-  "class"                     { return symbol(ChocoPyTokens.CLASS, yytext()); }
-  "continue"                  { return symbol(ChocoPyTokens.CONTINUE, yytext()); }
-  "def"                       { return symbol(ChocoPyTokens.DEF, yytext()); }
-  "del"                       { return symbol(ChocoPyTokens.DEL, yytext()); }
-  "elif"                      { return symbol(ChocoPyTokens.ELIF, yytext()); }
-  "else"                      { return symbol(ChocoPyTokens.ELSE, yytext()); }
-  "except"                    { return symbol(ChocoPyTokens.EXCEPT, yytext()); }
-  "finally"                   { return symbol(ChocoPyTokens.FINALLY, yytext()); }
-  "for"                       { return symbol(ChocoPyTokens.FOR, yytext()); }
-  "from"                      { return symbol(ChocoPyTokens.FROM, yytext()); }
-  "global"                    { return symbol(ChocoPyTokens.GLOBAL, yytext()); }
-  "if"                        { return symbol(ChocoPyTokens.IF, yytext()); }
-  "import"                    { return symbol(ChocoPyTokens.IMPORT, yytext()); }
-  "in"                        { return symbol(ChocoPyTokens.IN, yytext()); }
-  "is"                        { return symbol(ChocoPyTokens.IS, yytext()); }
-  "lambda"                    { return symbol(ChocoPyTokens.LAMBDA, yytext()); }
-  "nonlocal"                  { return symbol(ChocoPyTokens.NONLOCAL, yytext()); }
-  "not"                       { return symbol(ChocoPyTokens.NOT, yytext()); }
-  "or"                        { return symbol(ChocoPyTokens.OR, yytext()); }
-  "pass"                      { return symbol(ChocoPyTokens.PASS, yytext()); }
-  "raise"                     { return symbol(ChocoPyTokens.RAISE, yytext()); }
-  "return"                    { return symbol(ChocoPyTokens.RETURN, yytext()); }
-  "try"                       { return symbol(ChocoPyTokens.TRY, yytext()); }
-  "while"                     { return symbol(ChocoPyTokens.WHILE, yytext()); }
-  "yield"                     { return symbol(ChocoPyTokens.YIELD, yytext()); } 
+  // terminais que nao sao strings corrigidos
+  "False"                     { return symbol(ChocoPyTokens.BOOL, false); }
+  "None"                      { return symbol(ChocoPyTokens.NONE); }
+  "True"                      { return symbol(ChocoPyTokens.BOOL, true); }
+  "and"                       { return symbol(ChocoPyTokens.AND); }
+  "as"                        { return symbol(ChocoPyTokens.AS); }
+  "assert"                    { return symbol(ChocoPyTokens.ASSERT); }
+  "async"                     { return symbol(ChocoPyTokens.ASYNC); }
+  "await"                     { return symbol(ChocoPyTokens.AWAIT); }
+  "break"                     { return symbol(ChocoPyTokens.BREAK); }
+  "class"                     { return symbol(ChocoPyTokens.CLASS); }
+  "continue"                  { return symbol(ChocoPyTokens.CONTINUE); }
+  "def"                       { return symbol(ChocoPyTokens.DEF); }
+  "del"                       { return symbol(ChocoPyTokens.DEL); }
+  "elif"                      { return symbol(ChocoPyTokens.ELIF); }
+  "else"                      { return symbol(ChocoPyTokens.ELSE); }
+  "except"                    { return symbol(ChocoPyTokens.EXCEPT); }
+  "finally"                   { return symbol(ChocoPyTokens.FINALLY); }
+  "for"                       { return symbol(ChocoPyTokens.FOR); }
+  "from"                      { return symbol(ChocoPyTokens.FROM); }
+  "global"                    { return symbol(ChocoPyTokens.GLOBAL); }
+  "if"                        { return symbol(ChocoPyTokens.IF); }
+  "import"                    { return symbol(ChocoPyTokens.IMPORT); }
+  "in"                        { return symbol(ChocoPyTokens.IN); }
+  "is"                        { return symbol(ChocoPyTokens.IS); }
+  "lambda"                    { return symbol(ChocoPyTokens.LAMBDA); }
+  "nonlocal"                  { return symbol(ChocoPyTokens.NONLOCAL); }
+  "not"                       { return symbol(ChocoPyTokens.NOT); }
+  "or"                        { return symbol(ChocoPyTokens.OR); }
+  "pass"                      { return symbol(ChocoPyTokens.PASS); }
+  "raise"                     { return symbol(ChocoPyTokens.RAISE); }
+  "return"                    { return symbol(ChocoPyTokens.RETURN); }
+  "try"                       { return symbol(ChocoPyTokens.TRY); }
+  "while"                     { return symbol(ChocoPyTokens.WHILE); }
+  "yield"                     { return symbol(ChocoPyTokens.YIELD); } 
 
   /* Operators. */
   "+"                         { return symbol(ChocoPyTokens.PLUS, yytext()); }
@@ -175,15 +176,16 @@ Comment = #.*
   ","                         { return symbol(ChocoPyTokens.COMMA, yytext()); }
   ":"                         { return symbol(ChocoPyTokens.COLON, yytext()); }
   "->"                        { return symbol(ChocoPyTokens.RIGHT_ARROW, yytext()); }
+  "."                         { return symbol(ChocoPyTokens.DOT, yytext()); }
 
   /* Whitespace. */
   {WhiteSpace}                { /* ignore */ }
 
   /* Identifiers */
-  {Identifier}                { return symbol(ChocoPyTokens.IDENTIFIER, yytext()); }
+  {Identifier}                { return symbol(ChocoPyTokens.IDSTRING, yytext()); /* token identifier e nao terminal, necessita de conversao */ } 
 
   /* Comments */
-  {Comment}                   { return symbol(ChocoPyTokens.COMMENT, yytext()); }
+  {Comment}                   { /* nao devem ser emitidos pelo lexer */}
 }
 
 <HANDLE_INDENTATION> {

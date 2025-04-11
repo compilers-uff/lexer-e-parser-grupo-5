@@ -148,26 +148,21 @@ action code {:
 terminal NEWLINE;
 terminal INDENT;
 terminal DEDENT;
-terminal COMMENT;
+// terminal comment removido (nao deve ser emitido)
 
 /* Returned by the lexer for erroneous tokens.  Since it does not appear in
  * the grammar, it indicates a syntax error. */
 terminal UNRECOGNIZED;
-terminal BAD_INDENTATION;
+terminal BAD_INDENTATION; // todo
 
-
-
-/* Identifiers */
-
-terminal String IDENTIFIER; 
-
+/* Identifier */
+terminal String IDSTRING; // strings de identifiers
+ 
 
 /* Literals */
 /* boolean literals True and False are simply represented by their keyword tokens */
-
-terminal String IDSTRING; /* syntax of an identifier */
-terminal String STRING; /* for values */
-terminal Integer NUMBER; 
+terminal String STRING; // strings entre aspas duplas (literais)
+terminal Integer NUMBER;  // Integer Literal
 
 /* Operators */
 /* as stated on the language reference document, the operator tokens are the following: + - * // % < > <= >= 
@@ -191,7 +186,9 @@ terminal String LEFT_BRACKET;
 terminal String RIGHT_BRACKET;
 terminal String COMMA;
 terminal String COLON;
-terminal String RIGHT_ARROW; 
+terminal String RIGHT_ARROW;
+terminal String UNARYMINUS;
+terminal String DOT;
 
 
 /* KEYWORDS */
@@ -199,41 +196,40 @@ terminal String RIGHT_ARROW;
 assert, async, await, break, class, continue, def, del, elif, else, except, finally, for, from, global, if, import,
 in, is, lambda, nonlocal, not, or, pass, raise, return, try, while, with, yield. */
 
-terminal String FALSE;
-terminal String NONE;
-terminal String TRUE;
-terminal String AND;
-terminal String AS;
-terminal String ASSERT; 
-terminal String ASYNC;
-terminal String AWAIT;
-terminal String BREAK;
-terminal String CLASS;
-terminal String CONTINUE; 
-terminal String DEF; 
-terminal String DEL; 
-terminal String ELIF; 
-terminal String ELSE; 
-terminal String EXCEPT; 
-terminal String FINALLY; 
-terminal String FOR;
-terminal String FROM; 
-terminal String GLOBAL; 
-terminal String IF; 
-terminal String IMPORT; 
-terminal String IN; 
-terminal String IS;
-terminal String LAMBDA; 
-terminal String NONLOCAL; 
-terminal String NOT; 
-terminal String OR; 
-terminal String PASS; 
-terminal String RAISE; 
-terminal String RETURN; 
-terminal String TRY; 
-terminal String WHILE; 
-terminal String WITH; 
-terminal String YIELD; 
+terminal Boolean BOOL; // engloba True e False
+terminal NONE;
+terminal AND;
+terminal AS;
+terminal ASSERT; 
+terminal ASYNC;
+terminal AWAIT;
+terminal BREAK;
+terminal CLASS;
+terminal CONTINUE; 
+terminal DEF; 
+terminal DEL; 
+terminal ELIF; 
+terminal ELSE; 
+terminal EXCEPT; 
+terminal FINALLY; 
+terminal FOR;
+terminal FROM; 
+terminal GLOBAL; 
+terminal IF; 
+terminal IMPORT; 
+terminal IN; 
+terminal IS;
+terminal LAMBDA; 
+terminal NONLOCAL; 
+terminal NOT; 
+terminal OR; 
+terminal PASS; 
+terminal RAISE; 
+terminal RETURN; 
+terminal TRY; 
+terminal WHILE; 
+terminal WITH; 
+terminal YIELD; 
 
 /* TODO: DELIMITER TOKENS */
 
@@ -248,24 +244,32 @@ non terminal List<Declaration> program_head;
 non terminal List<Stmt>        stmt_list, opt_stmt_list;
 non terminal Stmt              stmt, expr_stmt;
 non terminal Expr              expr, binary_expr;
+non terminal ClassDef          class_def;
+non terminal FuncDef           func_def;
+non terminal TypeAnnotation    type;
+non terminal TypedVar          typed_var;
+non terminal Identifier        identifier;
 
 /* Precedences (lowest to highest) for resolving what would otherwise be
  * ambiguities in the form of shift/reduce conflicts.. */
+/* segundo a secao 4.1 do chocopy language reference*/
 
 precedence right IF, ELSE;
-precedence left OR, AND;
-precedence nonassoc EQUAL_TO, NOT_EQUAL_TO;
-precedence nonassoc LESS_THAN, GREATER_THAN;
-precedence nonassoc LESS_THAN_EQUAL_TO, GREATER_THAN_EQUAL_TO;
-precedence nonassoc IS;
-precedence left PLUS, MINUS, TIMES, DIVISION, MOD;
-precedence left COMMA, LEFT_BRACKET, RIGHT_BRACKET;
+precedence left OR;
+precedence left AND;
+precedence nonassoc EQUAL_TO, NOT_EQUAL_TO, LESS_THAN, GREATER_THAN, LESS_THAN_EQUAL_TO, GREATER_THAN_EQUAL_TO, IS;
+precedence left PLUS, MINUS;
+precedence left TIMES, DIVISION, MOD;
+precedence left UNARYMINUS; // todo: confirmar essa precedence left
+precedence left DOT, COMMA, LEFT_BRACKET, RIGHT_BRACKET;
 
 /* The start symbol. */
 start with program;
 
 
 /*****  GRAMMAR RULES *****/
+/* regras especificadas segundo o capitulo 4 do chocopy language reference */
+/* objetivo: atender os kinds de nós da AST (classes no common/astnodes) e as regras do chocopy */
 
 program ::= program_head:d opt_stmt_list:s
         {: RESULT = new Program(d.isEmpty() ? getLeft(s) : getLeft(d),
@@ -277,6 +281,10 @@ program ::= program_head:d opt_stmt_list:s
 program_head ::= /* not implemented; currently matches empty string */
                                      {: RESULT = empty(); :}
                 ;
+
+// convertendo string de Identifier para o simbolo nao terminal
+identifier ::= IDSTRING:id  {: RESULT = new Identifier(idxleft, idxright, id); :} 
+             ;
 
 opt_stmt_list ::=                    {: RESULT = empty(); :}
                 | stmt_list:s        {: RESULT = s; :}
@@ -298,14 +306,26 @@ stmt ::= expr_stmt:s NEWLINE {: RESULT = s; :}
 expr_stmt ::= expr:e    {: RESULT = new ExprStmt(exleft, exright, e); :}
             ;
 
-expr ::= binary_expr:e  {: RESULT = e; :}
+expr ::= identifier:id  {: RESULT = id; :}
+       | binary_expr:e  {: RESULT = e; :}
        | NUMBER:n       {: RESULT = new IntegerLiteral(nxleft, nxright, n); :}
        ;
 
 
 /* A binary expression, illustrating how to find the left and right
  * source position of a phrase. */
-binary_expr ::= expr:e1 PLUS:op expr:e2
-                        {: RESULT = new BinaryExpr(e1xleft, e2xright,
-                                                   e1, op, e2); :}
+binary_expr ::= expr:e1 PLUS:op expr:e2                   {: RESULT = new BinaryExpr(e1xleft, e2xright, e1, op, e2); :}
+              | expr:e1 MINUS:op expr:e2                  {: RESULT = new BinaryExpr(e1xleft, e2xright, e1, op, e2); :}
+              | expr:e1 TIMES:op expr:e2                  {: RESULT = new BinaryExpr(e1xleft, e2xright, e1, op, e2); :}
+              | expr:e1 DIVISION:op expr:e2               {: RESULT = new BinaryExpr(e1xleft, e2xright, e1, op, e2); :}
+              | expr:e1 EQUAL_TO:op expr:e2               {: RESULT = new BinaryExpr(e1xleft, e2xright, e1, op, e2); :}
+              | expr:e1 NOT_EQUAL_TO:op expr:e2           {: RESULT = new BinaryExpr(e1xleft, e2xright, e1, op, e2); :}
+              | expr:e1 LESS_THAN:op expr:e2              {: RESULT = new BinaryExpr(e1xleft, e2xright, e1, op, e2); :}
+              | expr:e1 GREATER_THAN:op expr:e2           {: RESULT = new BinaryExpr(e1xleft, e2xright, e1, op, e2); :}
+              | expr:e1 LESS_THAN_EQUAL_TO:op expr:e2     {: RESULT = new BinaryExpr(e1xleft, e2xright, e1, op, e2); :}
+              | expr:e1 GREATER_THAN_EQUAL_TO:op expr:e2  {: RESULT = new BinaryExpr(e1xleft, e2xright, e1, op, e2); :}
+              | expr:e1 IS:op expr:e2                     {: RESULT = new BinaryExpr(e1xleft, e2xright, e1, "is", e2); :}
+              | expr:e1 OR:op expr:e2                     {: RESULT = new BinaryExpr(e1xleft, e2xright, e1, "or", e2); :}
+              | expr:e1 AND:op expr:e2                    {: RESULT = new BinaryExpr(e1xleft, e2xright, e1, "and", e2); :}
               ;
+
