@@ -121,40 +121,28 @@ Comment = #.* // tokens de comentario removidos pois nao devem ser emitidos pelo
 
   /* Keywords */
   // terminais que nao sao strings corrigidos
+  // foi necessario retirar alguns terminais por falta de uso. os terminais retirados estao indicados no .cup
+  
   "False"                     { return symbol(ChocoPyTokens.BOOL, false); }
   "None"                      { return symbol(ChocoPyTokens.NONE); }
   "True"                      { return symbol(ChocoPyTokens.BOOL, true); }
   "and"                       { return symbol(ChocoPyTokens.AND); }
-  "as"                        { return symbol(ChocoPyTokens.AS); }
-  "assert"                    { return symbol(ChocoPyTokens.ASSERT); }
-  "async"                     { return symbol(ChocoPyTokens.ASYNC); }
-  "await"                     { return symbol(ChocoPyTokens.AWAIT); }
-  "break"                     { return symbol(ChocoPyTokens.BREAK); }
   "class"                     { return symbol(ChocoPyTokens.CLASS); }
-  "continue"                  { return symbol(ChocoPyTokens.CONTINUE); }
   "def"                       { return symbol(ChocoPyTokens.DEF); }
-  "del"                       { return symbol(ChocoPyTokens.DEL); }
   "elif"                      { return symbol(ChocoPyTokens.ELIF); }
   "else"                      { return symbol(ChocoPyTokens.ELSE); }
-  "except"                    { return symbol(ChocoPyTokens.EXCEPT); }
-  "finally"                   { return symbol(ChocoPyTokens.FINALLY); }
   "for"                       { return symbol(ChocoPyTokens.FOR); }
-  "from"                      { return symbol(ChocoPyTokens.FROM); }
   "global"                    { return symbol(ChocoPyTokens.GLOBAL); }
   "if"                        { return symbol(ChocoPyTokens.IF); }
-  "import"                    { return symbol(ChocoPyTokens.IMPORT); }
   "in"                        { return symbol(ChocoPyTokens.IN); }
   "is"                        { return symbol(ChocoPyTokens.IS); }
-  "lambda"                    { return symbol(ChocoPyTokens.LAMBDA); }
   "nonlocal"                  { return symbol(ChocoPyTokens.NONLOCAL); }
   "not"                       { return symbol(ChocoPyTokens.NOT); }
   "or"                        { return symbol(ChocoPyTokens.OR); }
   "pass"                      { return symbol(ChocoPyTokens.PASS); }
-  "raise"                     { return symbol(ChocoPyTokens.RAISE); }
   "return"                    { return symbol(ChocoPyTokens.RETURN); }
-  "try"                       { return symbol(ChocoPyTokens.TRY); }
   "while"                     { return symbol(ChocoPyTokens.WHILE); }
-  "yield"                     { return symbol(ChocoPyTokens.YIELD); } 
+
 
   /* Operators. */
   "+"                         { return symbol(ChocoPyTokens.PLUS, yytext()); }
