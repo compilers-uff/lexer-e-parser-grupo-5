@@ -51,6 +51,14 @@ import java.util.Stack;
             value);
     }
 
+    /* funcao auxiliar para emitir o token indent no inicio da linha (atendendo assim o caso bad_indentation.py) */
+    private Symbol indentSymbol(int type, Object value) {
+        return symbolFactory.newSymbol(ChocoPyTokens.terminalNames[type], type,
+            new ComplexSymbolFactory.Location(yyline + 1, yycolumn - 1),
+            new ComplexSymbolFactory.Location(yyline + 1, yycolumn + yylength()),
+            value);
+    }
+
     // Pilha para controlar os niveis de indentacao
     private Stack<Integer> indentationStack = new Stack<>();
     { indentationStack.push(0); } // Inicializa com 0 segundo o chocopy language reference
@@ -75,7 +83,7 @@ import java.util.Stack;
             indentationStack.push(currentIndent);
             yypushback(1);
             yybegin(YYINITIAL);
-            return symbol(ChocoPyTokens.INDENT);
+            return indentSymbol(ChocoPyTokens.INDENT, yytext());
         }
         else if(currentIndent < indentationStack.peek()){
             yypushback(1);
@@ -107,6 +115,7 @@ Comment = #.* // tokens de comentario removidos pois nao devem ser emitidos pelo
 
 <YYINITIAL> {
   
+
   /* Delimiters. */
   {LineBreak}                 { 
                                 yybegin(HANDLE_INDENTATION); 
@@ -114,10 +123,20 @@ Comment = #.* // tokens de comentario removidos pois nao devem ser emitidos pelo
                                 return symbol(ChocoPyTokens.NEWLINE); 
                               }
 
+  {LineBreak}([ \t]*(#.*)?(\r|\n|\r\n))+ {
+                                            yybegin(HANDLE_INDENTATION); 
+                                            currentIndent = 0; 
+                                            return symbol(ChocoPyTokens.NEWLINE); 
+                                            /* lidando com uma quebra de linha seguida de uma ou mais linhas 
+                                            * que podem conter so espacos e tabs, um comentário opcional e que
+                                            * terminam com uma quebra de linha (resolve o problema dos tokens UNRECOGNIZED
+                                            * emitidos nesses casos) */
+                                         }
+
   /* Literals. */
   {IntegerLiteral}            { return symbol(ChocoPyTokens.NUMBER,
                                                  Integer.parseInt(yytext())); }
-  {StringLiteral}             { return symbol(ChocoPyTokens.STRING, yytext());}
+  {StringLiteral}             { return symbol(ChocoPyTokens.STRING, yytext().substring(1, yytext().length() - 1)); /* necessaria retirada das contrabarras */}
 
   /* Keywords */
   // terminais que nao sao strings corrigidos
