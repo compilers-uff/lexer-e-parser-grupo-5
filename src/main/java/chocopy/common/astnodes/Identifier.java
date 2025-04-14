@@ -8,7 +8,7 @@ public class Identifier extends Expr {
 
     /** Text of the identifier. */
     public final String name;
-
+    
     /** An AST for the variable, method, or parameter named NAME, spanning
      *  source locations [LEFT..RIGHT]. */
     public Identifier(Location left, Location right, String name) {
