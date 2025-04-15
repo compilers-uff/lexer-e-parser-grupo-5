@@ -319,7 +319,7 @@ class_body ::= class_body:cb var_def:vd   {: RESULT = combine(cb, vd); :}
              | class_body:cb error:e1     {: RESULT = cb; :}
              ;
 
-/* retiramos definicao sem tipo, muitos problemas */
+
 func_def ::= DEF:def identifier:id LEFT_PARENTHESIS typedvar_list:tvl RIGHT_PARENTHESIS RIGHT_ARROW type:ty COLON NEWLINE INDENT func_body:fb stmt_list:stl DEDENT
                 {: RESULT = new FuncDef(defxleft, getRight(stl), id, tvl, ty, fb, stl); :}
             | DEF:def identifier:id LEFT_PARENTHESIS typedvar_list:tvl RIGHT_PARENTHESIS COLON:c NEWLINE INDENT func_body:fb stmt_list:stl DEDENT
